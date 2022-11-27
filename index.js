@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 5000;
-//new
+
 const app = express();
 
 // middleware
@@ -53,6 +53,41 @@ async function run() {
     //   }
     //   res.status(403).send({ crockeriesToken: "" });
     // });
+    const crockeriesCollections = client
+      .db("crockeriesGallery")
+      .collection("crockeries");
+    const categoriesCollections = client
+      .db("crockeriesGallery")
+      .collection("categories");
+    const usersCollections = client.db("crockeriesGallery").collection("users");
+    const ordersCollections = client
+      .db("crockeriesGallery")
+      .collection("orders");
+
+    //get api
+    app.get("/categories", async (req, res) => {
+      const query = {};
+      const result = await categoriesCollections.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/crockeries", async (req, res) => {
+      const query = {};
+      const result = await crockeriesCollections.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/categoriesProducts/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { categoryName: id };
+      const result = await crockeriesCollections.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/crockeries/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: ObjectId(id) };
+      const result = await crockeriesCollections.findOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
