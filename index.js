@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("furniture server is running now ");
+  res.send("crockeries server is running now ");
 });
 app.listen(port, () => {
   console.log("port is running", port);
@@ -189,20 +189,20 @@ async function run() {
   });
   app.get("/crockeries", async (req, res) => {
     const query = {};
-    const result = await furnitureCollections.find(query).toArray();
+    const result = await crockeriesCollections.find(query).toArray();
     res.send(result);
   });
 
   app.get("/categoriesProducts/:id", async (req, res) => {
     const { id } = req.params;
     const query = { categoryName: id };
-    const result = await furnitureCollections.find(query).toArray();
+    const result = await crockeriesCollections.find(query).toArray();
     res.send(result);
   });
   app.get("/crockeries/:id", async (req, res) => {
     const { id } = req.params;
     const query = { _id: ObjectId(id) };
-    const result = await furnitureCollections.findOne(query);
+    const result = await crockeriesCollections.findOne(query);
     res.send(result);
   });
   //   here is get method ends
