@@ -5,8 +5,9 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 // middle ware
+
 app.use(cors());
 app.use(express.json());
 
@@ -44,6 +45,9 @@ async function run() {
   const reportsCollections = client
     .db("crockeriesGallery")
     .collection("reports");
+  const paymentsCollection = client
+    .db("crockeriesGallery")
+    .collection("payments");
   // verify admin
   const verifyAdmin = async (req, res, next) => {
     const decodedEmail = req.decoded.email;
@@ -79,6 +83,43 @@ async function run() {
   };
   try {
     //   here is post method starts
+
+    // payment option
+    app.post("/create-payment-intent", async (req, res) => {
+      const order = req.body;
+      // console.log(order);
+      const price = order.price;
+      const amount = price * 100;
+      // console.log(price);
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.order;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedResult = await ordersCollections.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(result);
+    });
+    //payments method ends
+    //   here is post method starts
     app.post("/orders", async (req, res) => {
       const checkSellerEmail = req.query.email;
       const order = req.body;
@@ -99,11 +140,13 @@ async function run() {
       const result = await ordersCollections.insertOne(order);
       res.send(result);
     });
+
     app.post("/crockeries", async (req, res) => {
       const product = req.body;
       const result = await crockeriesCollections.insertOne(product);
       res.send(result);
     });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -199,19 +242,13 @@ async function run() {
       const result = await crockeriesCollections.find(query).toArray();
       res.send(result);
     });
-
-    app.get("/categoriesProducts/:id", async (req, res) => {
-      const { id } = req.params;
-      const query = { categoryName: id };
-      const result = await crockeriesCollections.find(query).toArray();
-      res.send(result);
-    });
     app.get("/crockeries/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: ObjectId(id) };
       const result = await crockeriesCollections.findOne(query);
       res.send(result);
     });
+
     app.get(
       "/crockeries/seller/:email",
       verifyJWT,
@@ -230,15 +267,69 @@ async function run() {
       );
       res.send(filter);
     });
+    app.get("/categoriesProducts/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { categoryName: id };
+      const result = await crockeriesCollections.find(query).toArray();
+      res.send(result);
+    });
     app.get("/orders/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { buyerEmail: email };
       const result = await ordersCollections.find(query).toArray();
       res.send(result);
     });
+    app.get("/singleOrder/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await ordersCollections.findOne(query);
+      res.send(result);
+    });
     app.get("/reports", verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const result = await reportsCollections.find(query).toArray();
+      res.send(result);
+    });
+    //   here is put method starts
+    app.put("/users/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      if (email) {
+        const sellerVerified = { email: email };
+        const query = { sellerEmail: email };
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            verified: "true",
+          },
+        };
+        const seller = await usersCollections.updateOne(
+          sellerVerified,
+          updateDoc,
+          options
+        );
+        const result = await crockeriesCollections.updateMany(
+          query,
+          updateDoc,
+          options
+        );
+        res.send(result);
+      }
+    });
+    app.put("/crockeries/:id", async (req, res) => {
+      const { id } = req.params;
+      const Status = req.body;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          Status: Status?.Status,
+        },
+      };
+      const result = await crockeriesCollections.updateOne(
+        query,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
 
@@ -261,7 +352,7 @@ async function run() {
       res.send(result);
     });
     app.delete("/crockeries/:id", verifyJWT, verifyAdmin, async (req, res) => {
-      const { id } = req.params;
+      const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await crockeriesCollections.deleteOne(query);
       res.send(result);
@@ -281,6 +372,12 @@ async function run() {
       const { id } = req.params;
       const query = { _id: ObjectId(id) };
       const result = await ordersCollections.deleteOne(query);
+      res.send(result);
+    });
+    app.delete("/reports/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: ObjectId(id) };
+      const result = await reportsCollections.deleteOne(query);
       res.send(result);
     });
     //   here is delete method ends
