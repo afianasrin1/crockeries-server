@@ -247,6 +247,7 @@ async function run() {
       const result = await reportsCollections.find(query).toArray();
       res.send(result);
     });
+
     //  delete method starts
     app.delete("/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const { id } = req.params;
@@ -265,6 +266,23 @@ async function run() {
       const result = await usersCollections.deleteOne(query);
       res.send(result);
     });
+    app.delete("/crockeries/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: ObjectId(id) };
+      const result = await crockeriesCollections.deleteOne(query);
+      res.send(result);
+    });
+    app.delete(
+      "/crockeries/seller/:id",
+      verifyJWT,
+      verifySeller,
+      async (req, res) => {
+        const { id } = req.params;
+        const query = { _id: ObjectId(id) };
+        const result = await crockeriesCollections.deleteOne(query);
+        res.send(result);
+      }
+    );
     //   here is delete method ends
   } catch {
     (err) => {
