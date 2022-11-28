@@ -194,7 +194,7 @@ async function run() {
       const user = await usersCollections.findOne(query);
       res.send({ isBuyer: user?.role === "buyer" });
     });
-
+    //category & crockeries get method
     app.get("/categories", async (req, res) => {
       const query = {};
       const result = await categoriesCollections.find(query).toArray();
