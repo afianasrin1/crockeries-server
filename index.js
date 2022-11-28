@@ -84,22 +84,28 @@ async function run() {
   try {
     //   here is post method starts
     app.post("/orders", async (req, res) => {
+      const checkSellerEmail = req.query.email;
       const order = req.body;
       const query = {
         productId: order.productId,
-        buyerEmail: order.buyerEmail,
+        // buyerEmail: order.buyerEmail,
         productImage: order.productImage,
       };
+      const checkSeller = { sellerEmail: order?.sellerEmail };
+      const seller = await crockeriesCollections.findOne(checkSeller);
+      if (checkSellerEmail === seller?.sellerEmail) {
+        return res.send({ message: "You can't order your product" });
+      }
       const alreadyOrder = await ordersCollections.findOne(query);
       if (alreadyOrder) {
-        return res.send({ message: "You already buy this product" });
+        return res.send({ message: "Sorry this product is not Available" });
       }
       const result = await ordersCollections.insertOne(order);
       res.send(result);
     });
     app.post("/crockeries", verifyJWT, verifySeller, async (req, res) => {
       const product = req.body;
-      const result = await furnitureCollections.insertOne(product);
+      const result = await crockeriesCollections.insertOne(product);
       res.send(result);
     });
     app.post("/users", async (req, res) => {
