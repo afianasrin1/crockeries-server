@@ -47,7 +47,9 @@ async function run() {
     .collection("categories");
   const usersCollections = client.db("crockeriesGallery").collection("users");
   const ordersCollections = client.db("crockeriesGallery").collection("orders");
-
+  const reportsCollections = client
+    .db("crockeriesGallery")
+    .collection("reports");
   // verify admin
   const verifyAdmin = async (req, res, next) => {
     const decodedEmail = req.decoded.email;
@@ -118,7 +120,11 @@ async function run() {
       const result = await usersCollections.insertOne(user);
       res.send(result);
     });
-    //   here is post method ends
+    app.post("/reports", async (req, res) => {
+      const report = req.body;
+      const result = await reportsCollections.insertOne(report);
+      res.send(result);
+    });
 
     //   here is get method starts
     app.get("/users/admin/:email", async (req, res) => {
