@@ -103,7 +103,7 @@ async function run() {
       const result = await ordersCollections.insertOne(order);
       res.send(result);
     });
-    app.post("/crockeries", verifyJWT, verifySeller, async (req, res) => {
+    app.post("/crockeries", async (req, res) => {
       const product = req.body;
       const result = await crockeriesCollections.insertOne(product);
       res.send(result);
