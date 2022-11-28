@@ -10,12 +10,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("crockeries server is running now ");
-});
-app.listen(port, () => {
-  console.log("port is running", port);
-});
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8gtonc3.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -298,4 +292,11 @@ async function run() {
 }
 run().catch((err) => {
   console.log(err);
+});
+
+app.get("/", (req, res) => {
+  res.send("crockeries server is running now ");
+});
+app.listen(port, () => {
+  console.log("port is running", port);
 });
