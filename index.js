@@ -127,6 +127,19 @@ async function run() {
     });
 
     //   here is get method starts
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollections.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
+          expiresIn: "7d",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(403).send({ accessToken: "" });
+    });
+    //user get method
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -181,18 +194,6 @@ async function run() {
       const user = await usersCollections.findOne(query);
       res.send({ isBuyer: user?.role === "buyer" });
     });
-    app.get("/jwt", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const user = await usersCollections.findOne(query);
-      if (user) {
-        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
-          expiresIn: "5d",
-        });
-        return res.send({ accessToken: token });
-      }
-      res.status(403).send({ accessToken: "" });
-    });
 
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -215,6 +216,35 @@ async function run() {
       const { id } = req.params;
       const query = { _id: ObjectId(id) };
       const result = await crockeriesCollections.findOne(query);
+      res.send(result);
+    });
+    app.get(
+      "/crockeries/seller/:email",
+      verifyJWT,
+      verifySeller,
+      async (req, res) => {
+        const email = req.params.email;
+        const query = { sellerEmail: email };
+        const result = await crockeriesCollections.find(query).toArray();
+        res.send(result);
+      }
+    );
+    app.get("/advertiseCrockeries", async (req, res) => {
+      const crockeries = await crockeriesCollections.find({}).toArray();
+      const filter = crockeries.filter(
+        (crockerie) => crockerie.Status === "Approved"
+      );
+      res.send(filter);
+    });
+    app.get("/orders/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { buyerEmail: email };
+      const result = await ordersCollections.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/reports", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const result = await reportsCollections.find(query).toArray();
       res.send(result);
     });
     //  delete method starts
