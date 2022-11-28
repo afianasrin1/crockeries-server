@@ -283,6 +283,12 @@ async function run() {
         res.send(result);
       }
     );
+    app.delete("/orders/:id", verifyJWT, async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: ObjectId(id) };
+      const result = await ordersCollections.deleteOne(query);
+      res.send(result);
+    });
     //   here is delete method ends
   } catch {
     (err) => {
