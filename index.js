@@ -125,17 +125,16 @@ async function run() {
       const order = req.body;
       const query = {
         productId: order.productId,
-        // buyerEmail: order.buyerEmail,
         productImage: order.productImage,
       };
-      const checkSeller = { sellerEmail: order?.sellerEmail };
+      const checkSeller = { sellerEmail: order?.buyerEmail };
       const seller = await crockeriesCollections.findOne(checkSeller);
       if (checkSellerEmail === seller?.sellerEmail) {
         return res.send({ message: "You can't order your product" });
       }
       const alreadyOrder = await ordersCollections.findOne(query);
       if (alreadyOrder) {
-        return res.send({ message: "Sorry this product is not Available" });
+        return res.send({ message: "Sorry this product is out of stock" });
       }
       const result = await ordersCollections.insertOne(order);
       res.send(result);
